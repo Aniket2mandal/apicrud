@@ -10,33 +10,20 @@ class ApiAuthController extends Controller
 {
 // CODE FOR REGISTER CREDENTIAL
     public function register(Request $request){
+// dd($request);
         $validate=$request->validate([
-            'email'=>'required|string',
-            'password'=>'required',
-            'c-password'=>'required|same:password'
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
               ]);
 
-            $userdata=User::create([
-                'email'=>$request->email,
-                $pass='password'=>$request->password,
-                'c-password'=>$request->c_password,
-                bcrypt($pass)
-                // 'password'=>$request->bcrypt($input['password']),
-            ]);
-            $registertoken=$user->createToken('Register Token')->accessToken;
-            if($registertoken){
-            $response=[
-              'success'=>true,
-              'message'=>'User registered successfully'
-            ];
-            return response()->json($response,200);
-        }else{
-            $response=[
-                'success'=>false,
-                'message'=>'User connot register'
-              ];
-              return response()->json($response,404);
-        }
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        return response()->json(['message' => 'User successfully registered'], 201);
     }
 
     // CODE FOR LOGIN CREDENTIALS
@@ -44,7 +31,7 @@ class ApiAuthController extends Controller
         $validate=$request->validate([
             'email'=>'required|string',
             'password'=>'required',
-            'c-password'=>'required|same:password'
+
               ]);
 
         $user=User::where('email',$request->email)->first();
@@ -52,11 +39,14 @@ class ApiAuthController extends Controller
             $token=$user->createToken('Access Token')->accessToken;
         }
         else{
-            throw new \Exception('invalid credentials',401);
+            return response()->json([
+                'status'=>401,
+               'message'=>"Invalid",
+            ]);
         }
         return response()->json([
             'status'=>200,
-           'message'=>"User logeding successfully",
+           'message'=>"User loged in successfully",
             'access_token'=>$token
         ]);
     }
